@@ -1423,20 +1423,23 @@ window.Radzen = {
   },
   focusFirstFocusableElement: function (el) {
       var focusable = Radzen.getFocusableElements(el);
-      if (!focusable || !focusable.length) return;
+      var editor = el.querySelector('.rz-html-editor');
 
-      var first = focusable[0];
-      
-      if (first.classList.contains('rz-html-editor-content')) {
-          var sel = window.getSelection();
-          var range = document.createRange();
-          range.setStart(first, 0);
-          range.setEnd(first, 0);
-          sel.removeAllRanges();
-          sel.addRange(range);
-          first.focus();
+      if (editor && !focusable.includes(editor.previousElementSibling)) {
+          var editable = el.querySelector('.rz-html-editor-content');
+          if (editable) {
+              var selection = window.getSelection();
+              var range = document.createRange();
+              range.setStart(editable, 0);
+              range.setEnd(editable, 0);
+              selection.removeAllRanges();
+              selection.addRange(range);
+          }
       } else {
-          first.focus();
+          var firstFocusable = focusable[0];
+          if (firstFocusable) {
+              firstFocusable.focus();
+          }
       }
   },
   openSideDialog: function (options) {
@@ -1558,16 +1561,8 @@ window.Radzen = {
       e.preventDefault();
   },
   getFocusableElements: function (element) {
-    return [...element.querySelectorAll('a, button, input, textarea, select, details, iframe, embed, object, summary, dialog, audio[controls], video[controls], [contenteditable], [tabindex]')]
-      .filter(el => {
-        if (!el || el.hasAttribute('disabled') || el.offsetParent === null) return false;
-    
-        // If this is inside a .rz-html-editor with tabindex="-1", skip it
-        var editorParent = el.closest('.rz-html-editor');
-        if (editorParent && editorParent.hasAttribute('tabindex') && editorParent.tabIndex === -1) return false;
-    
-        return el.tabIndex > -1 || el.isContentEditable;
-    });
+    return [...element.querySelectorAll('a, button, input, textarea, select, details, iframe, embed, object, summary dialog, audio[controls], video[controls], [contenteditable], [tabindex]')]
+        .filter(el => el && el.tabIndex > -1 && !el.hasAttribute('disabled') && el.offsetParent !== null);
   },
   focusTrap: function (e) {
     e = e || window.event;
